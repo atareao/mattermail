@@ -1,0 +1,10 @@
+GET http://localhost:8080/
+
+GET http://localhost:8080/status
+
+POST http://localhost:8080/hook
+Content-Type: application/json
+
+{
+    "message": "nada"
+}
