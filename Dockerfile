@@ -39,7 +39,7 @@ ARG APP=matterhook
 
 RUN apk add --update --no-cache \
             su-exec~=0.2-r1 \
-            tzdata~=2022a-r0 && \
+            tzdata~=2022c-r0 && \
     rm -rf /var/cache/apk && \
     rm -rf /var/lib/app/lists*
 # Copy the user
@@ -52,4 +52,4 @@ COPY entrypoint.sh /app/
 COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/$APP /app/
 
 ENTRYPOINT ["/bin/sh", "/app/entrypoint.sh"]
-CMD ["/app/$APP"]
+CMD ["/app/matterhook"]

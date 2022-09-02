@@ -1,8 +1,8 @@
-GET http://localhost:8080/
+GET https://matterhook.tuservidor.es/
 
-GET http://localhost:8080/status
+GET https://matterhook.tuservidor.es/status
 
-POST http://localhost:8080/hook
+POST https://matterhook.tuservidor.es/hook
 Content-Type: application/json
 
 {
