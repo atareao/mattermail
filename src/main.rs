@@ -1,6 +1,7 @@
 use actix_web::{App, HttpServer};
 
 mod routes;
+mod mail;
 
 use routes::{root, status, hook};
 
