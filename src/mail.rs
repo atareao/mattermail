@@ -1,42 +1,23 @@
 use async_native_tls::TlsConnector;
+//use futures_util::
+use futures::TryStreamExt;
+use async_std::net::ToSocketAddrs;
 use async_imap;
 
-pub struct ImapConfiguration{
-    server: String,
-    port: i32,
-}
-
-impl ImapConfiguration{
-    pub fn new(server: &str, port: i32) -> Self{
-        Self{
-            server: server.to_string(),
-            port,
-        }
-    }
-}
-pub struct Credentials{
-    user: String,
-    password: String,
-}
-
-impl Credentials{
-    pub fn new(user: &str, password: &str) -> Self{
-        Self{
-            user: user.to_string(),
-            password: password.to_string(),
-        }
-    }
-}
-
-pub async fn get_unread_mails(imap_configuration: ImapConfiguration, credentials: Credentials) -> imap::error::Result<Option<String>>{
+pub async fn get_unread_mails(server: &str, port: u16, user: &str, password: &str) -> Vec<String>{
+    let mut result:Vec<String> = Vec::new();
     let tls = TlsConnector::new();
-    let client = async_imap::connect((imap_configuration.server, imap_configuration.port), imap_configuration.server, tls).await?;
+    let client = async_imap::connect( (server, port), server, tls).await.unwrap();
     let mut imap_session = client
-        .login(credentials.user, credentials.password)
+        .login(user, password)
         .await
-        .map_err(|e| e.0)?;
-    imap_session.select("INBOX").await?;
-    let messages_stream = imap_session.fetch(sequence_set, query)
-
-
+        .map_err(|e| e.0).unwrap();
+    imap_session.select("INBOX").await.unwrap();
+    let messages_stream = imap_session.fetch("1", "RFC822").await.unwrap();
+    let messages: Vec<_> = messages_stream.try_collect().await.unwrap();
+    for message in messages {
+        let body = message.body().unwrap();
+        result.push(std::str::from_utf8(body).unwrap().to_string());
+    }
+    result
 }
