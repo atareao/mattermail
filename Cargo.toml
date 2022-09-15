@@ -14,3 +14,5 @@ async-imap = "0.6"
 async-native-tls = "0.4"
 async-std = {version = "1.12", features = ["attributes"]}
 futures = "0.3"
+imap-proto = "0.16"
+alloc = "1.36"
