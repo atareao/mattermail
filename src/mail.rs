@@ -6,6 +6,7 @@ use imap_proto::types::Address;
 use std::str::from_utf8;
 use std::borrow::Cow;
 use html2md::parse_html;
+use mail_parser::Message;
 
 pub async fn get_unread_mails(server: &str, port: u16, user: &str, password: &str) -> Vec<String>{
     let mut result:Vec<String> = Vec::new();
@@ -28,9 +29,8 @@ pub async fn get_unread_mails(server: &str, port: u16, user: &str, password: &st
         ////let subject = unsafe {std::str::from_utf8_unchecked(&envelope.subject.as_ref().unwrap())};
         //let from = &envelope.from;
         let body = message.body().unwrap();
-        let content =parse_html(&std::str::from_utf8(body).unwrap().to_string());
-        println!("{} --- {}", counter, content);
-        result.push(content);
+        let content = Message::parse(body).unwrap();
+        result.push(content.get_subject().unwrap().to_string());
     }
     /*
     for item in new_items {
