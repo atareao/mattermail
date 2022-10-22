@@ -16,4 +16,5 @@ async-std = {version = "1.12", features = ["attributes"]}
 futures = "0.3"
 imap-proto = "0.16"
 html2md = "0.2"
-email-parser = "0.5"
+mail-parser = "0.7"
+reqwest = "0.11"
