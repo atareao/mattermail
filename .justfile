@@ -1,20 +1,16 @@
+author  := "atareao"
+name    := `grep -oP '^name\s*=\s*"\K([^"]*)' Cargo.toml`
+version := `grep -oP '^version\s*=\s*"\K([^"]*)' Cargo.toml`
+
 build:
-    #!/usr/bin/env bash
-    set -euxo pipefail
-    name=$(grep -oP '^name\s*=\s*"\K([^"]*)' Cargo.toml)
-    version=$(grep -oP '^version\s*=\s*"\K([^"]*)' Cargo.toml)
-    docker build -t "atareao/${name}:v${version}" .
+    docker build -t "{{author}}/{{name}}:v{{version}}" .
+
+latest:
+    docker image tag "{{author}}/{{name}}:v{{version}}" "{{author}}/{{name}}":latest
+    docker push "{{author}}/{{name}}:latest"
 
 push:
-    #!/usr/bin/env bash
-    set -euxo pipefail
-    name=$(grep -oP '^name\s*=\s*"\K([^"]*)' Cargo.toml)
-    version=$(grep -oP '^version\s*=\s*"\K([^"]*)' Cargo.toml)
-    docker push "atareao/$name:v${version}"
+    docker push "{{author}}/{{name}}:v{{version}}"
 
 run:
-    #!/usr/bin/env bash
-    set -euxo pipefail
-    name=$(grep -oP '^name\s*=\s*"\K([^"]*)' Cargo.toml)
-    version=$(grep -oP '^version\s*=\s*"\K([^"]*)' Cargo.toml)
-    docker run -it --rm --init --env-file .env --name "${name}" "atareao/${name}:v${version}"
+    docker run -it --rm --init --env-file .env --name "{{name}}" "{{author}}/{{name}}:v{{version}}"
