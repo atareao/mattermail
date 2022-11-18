@@ -38,8 +38,8 @@ FROM alpine:3.16
 ARG APP=mattermail
 
 RUN apk add --update --no-cache \
-            su-exec~=0.2-r1 \
-            tzdata~=2022c-r0 && \
+            su-exec~=0.2 \
+            tzdata~=2022 && \
     rm -rf /var/cache/apk && \
     rm -rf /var/lib/app/lists*
 # Copy the user
