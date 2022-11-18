@@ -1,11 +1,29 @@
-use actix_web::{get, post, Error, HttpResponse, http::StatusCode, http::header::ContentType, Responder};
-use serde::Serialize;
+use actix_web::{get, post, web, Error, HttpResponse, http::StatusCode, http::header::{ContentType, Accept}, Responder};
+use serde::{Serialize, Deserialize};
+use log::info;
+use serde_json::json;
+
 
 #[derive(Serialize)]
 struct Respuesta{
     code: i32,
     status: String,
     message: String,
+}
+
+#[derive(Deserialize)]
+struct MatterCommandHook{
+    channel_id: String,
+    channel_name: String,
+    command: String,
+    response_url: String,
+    team_domain: String,
+    team_id: String,
+    text: String,
+    token: String,
+    trigger_id: String,
+    user_id: String,
+    user_name: String,
 }
 
 
@@ -25,6 +43,8 @@ pub async fn status() -> impl Responder{
 }
 
 #[post("/hook")]
-pub async fn hook(post: String) -> impl Responder{
-    HttpResponse::Ok().body(format!("Message recievend {}", post))
+pub async fn hook(form: web::Form<MatterCommandHook>) -> impl Responder{
+    info!("received command: {} and text: {}", form.command, form.text);
+    HttpResponse::Ok()
+        .body(format!("Hola: {}", form.user_name))
 }
