@@ -9,12 +9,18 @@ use mattermost::Mattermost;
 use std::env;
 use tokio;
 
+use env_logger::Env;
+use log::{debug, error, info};
+
 use crate::mail::get_unread_mails;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
+    let log_level = env::var("LOG_LEVEL").unwrap_or("info".to_string());
+    env_logger::init_from_env(Env::default().default_filter_or(log_level));
     let port = env::var("PORT").expect("PORT not set");
+    info!("Port: {}", port);
     let pull_time: u64 = env::var("PULL_TIME").unwrap_or("300".to_string())
         .parse()
         .unwrap();
@@ -34,7 +40,7 @@ async fn main() -> std::io::Result<()> {
         loop {
             let mails = get_unread_mails(&imap_host, imap_port, &imap_login, &imap_passwd).await;
             for mail in mails{
-                println!("{}", mail);
+                info!("{}", mail);
                 mm.post_message(&channel_id, &mail.to_string(), None).await.unwrap();
             }
             tokio::time::sleep(duration).await;
@@ -45,6 +51,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(Logger::default())
             .service(routes::root)
+            .service(routes::status)
             .service(routes::hook)
     })
     .workers(2)
