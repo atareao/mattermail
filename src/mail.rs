@@ -4,7 +4,7 @@ use futures::TryStreamExt;
 use async_imap;
 use std::fmt::Display;
 use html2md::parse_html;
-use std::fmt;
+use std::{env, fmt};
 use mail_parser::{Message, HeaderValue, Addr, Group};
 
 pub struct Mail{
@@ -33,6 +33,33 @@ impl Display for Mail {
         write!(f, "Id: {}\nReg: {}\nFrom: {}\nSubject: {}",
             self.id, self.reg, self.from, self.subject)
     }
+}
+
+pub async fn read_mail(message_id: &str) -> String{
+    let server: &str = &env::var("IMAP_HOST").expect("HOST not set");
+    let port: u16 = env::var("IMAP_PORT").expect("PORT not set")
+        .parse()
+        .unwrap();
+    let user = env::var("IMAP_LOGIN").expect("LOGIN not set");
+    let password = env::var("IMAP_PASSWD").expect("PASSWD not set");
+    let tls = TlsConnector::new();
+    let client = async_imap::connect( (server, port), server, tls).await.unwrap();
+    let mut imap_session = client
+        .login(user, password)
+        .await
+        .map_err(|e| e.0).unwrap();
+    imap_session.select("INBOX").await.unwrap();
+    let messages_stream = imap_session.fetch(message_id, "RFC822").await.unwrap();
+    let messages: Vec<_> = messages_stream.try_collect().await.unwrap();
+    let message = if let Some(m) = messages.first(){
+        m
+    }else{
+        return "".to_string();
+    };
+    let body = message.body().unwrap_or(b"");
+    let body = std::str::from_utf8(body).unwrap_or("").to_string();
+    imap_session.logout().await.unwrap();
+    body
 }
 
 pub async fn get_unread_mails(server: &str, port: u16, user: &str, password: &str) -> Vec<Mail>{
