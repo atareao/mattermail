@@ -5,6 +5,10 @@ FROM rust:latest AS builder
 
 LABEL maintainer="Lorenzo Carbonell <a.k.a. atareao> lorenzo.carbonell.cerezo@gmail.com"
 
+# Create appuser
+ENV USER=app
+ENV UID=10001
+
 ARG TARGET=x86_64-unknown-linux-musl
 ENV RUST_MUSL_CROSS_TARGET=$TARGET
 ENV OPENSSL_LIB_DIR="/usr/lib/x86_64-linux-gnu"
@@ -24,32 +28,37 @@ RUN rustup target add x86_64-unknown-linux-musl && \
         && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
+RUN adduser \
+    --disabled-password \
+    --gecos "" \
+    --home "/${USER}" \
+    --shell "/sbin/nologin" \
+    --uid "${UID}" \
+    "${USER}"
+
 WORKDIR /app
 
-COPY ./ .
+COPY Cargo.toml Cargo.lock ./
+COPY src src
 
-RUN cargo build  --target x86_64-unknown-linux-musl --release
+RUN cargo build --release --target x86_64-unknown-linux-musl && \
+    cp /app/target/x86_64-unknown-linux-musl/release/mattermail /app/mattermail
 
 ###############################################################################
 ## Final image
 ###############################################################################
-FROM alpine:3.16
-
-ARG APP=mattermail
-
-RUN apk add --update --no-cache \
-            su-exec~=0.2 \
-            tzdata~=2022 && \
-    rm -rf /var/cache/apk && \
-    rm -rf /var/lib/app/lists*
-# Copy the user
+FROM alpine:3.17
 
 # Set the work dir
 WORKDIR /app
 
-COPY entrypoint.sh /app/
 # Copy our build
-COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/$APP /app/
+COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=builder /etc/group /etc/group
+COPY --from=builder /app/mattermail /app/
 
-ENTRYPOINT ["/bin/sh", "/app/entrypoint.sh"]
+RUN chown -R app: /app
+
+USER app
+
 CMD ["/app/mattermail"]
